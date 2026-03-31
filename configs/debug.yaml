@@ -1,0 +1,21 @@
+# Inherits from default.yaml, overrides for quick debugging
+model_name: "Qwen/Qwen2.5-VL-2B-Instruct"
+model_dtype: "float16"
+num_rounds: 2
+samples_per_round: 50
+probe_size: 20
+grpo_group_size: 2
+max_new_tokens: 128
+log_to_wandb: false
+
+clusters:
+  math:
+    dataset_id: "AI4Math/MathVista"
+    split_eval: "testmini"
+    split_train: "testmini"
+    metric: "mathvista"
+  science:
+    dataset_id: "derek-thomas/ScienceQA"
+    split_eval: "test"
+    split_train: "train"
+    metric: "mc_match"

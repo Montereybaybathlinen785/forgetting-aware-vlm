@@ -1,0 +1,69 @@
+# Model
+model_name: "Qwen/Qwen2.5-VL-7B-Instruct"
+model_dtype: "bfloat16"
+
+# Training loop
+num_rounds: 10
+samples_per_round: 5000
+
+# GRPO
+grpo_group_size: 8
+learning_rate: 1.0e-6
+kl_coeff: 0.01
+max_new_tokens: 512
+
+# Forgetting detection
+probe_size: 200  # per cluster
+
+# Curriculum scheduling
+curriculum_temperature: 1.0
+curriculum_floor: 0.05
+
+# Reward
+lambda_forgetting: 0.1
+
+# Datasets (skill clusters)
+clusters:
+  math:
+    dataset_id: "AI4Math/MathVista"
+    split_eval: "testmini"
+    split_train: "testmini"  # MathVista has no train split; use testmini for prototype
+    metric: "mathvista"
+  documents:
+    dataset_id: "lmms-lab/DocVQA"
+    split_eval: "validation"
+    split_train: "train"
+    metric: "anls"
+  charts:
+    dataset_id: "HuggingFaceM4/ChartQA"
+    split_eval: "test"
+    split_train: "train"
+    metric: "chartqa"
+  spatial:
+    dataset_id: "lmms-lab/GQA"
+    split_eval: "testdev_balanced"
+    split_train: "train_balanced"
+    metric: "exact_match"
+  science:
+    dataset_id: "derek-thomas/ScienceQA"
+    split_eval: "test"
+    split_train: "train"
+    metric: "mc_match"
+  natural:
+    dataset_id: "HuggingFaceM4/VQAv2"
+    split_eval: "validation"
+    split_train: "train"
+    metric: "vqa_soft"
+
+# Ablation
+use_curriculum: true
+use_reward_bonus: true
+
+# Paths
+output_dir: "outputs"
+probe_cache_dir: "outputs/probe_cache"
+
+# Logging
+wandb_project: "fa-evolve"
+wandb_run_name: null  # auto-generated if null
+log_to_wandb: true
